@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!--<link rel="stylesheet" href="../style/common.css">-->
+    <title></title>
+</head>
+<body style="position: absolute; left: 0; top: 0; margin: 0; background-color: #000000">
+<div id="debug-message" style="position: absolute; top: 30px; left: 20px; width: 1024px; height: 680px; word-wrap: break-word; font-size: 15pt;
+    z-index: 9999999; color: #a61b29; overflow: scroll; display: none;">
+</div>
+</body>
+<script type="application/javascript" src="../utility/assistant.js"></script>
+<script type="application/javascript" src="../utility/async.js"></script>
+<script type="application/javascript" src="../cms/cms.api.js"></script>
+<script type="application/javascript" src="../cms/cms.config.js"></script>
+<script type="application/javascript" src="../module/video.module.js"></script>
+<script type="application/javascript" src="../module/cursor.module.js"></script>
+<script type="application/javascript" src="../module/transfer.module.js"></script>
+<script type="application/javascript">
+    function VideoComponent() {
+        VideoModule.call(this);
+    }
+
+    function CursorComponent(video) {
+        CursorModule.call(this);
+
+        // 属性
+        this.video = video;
+        this.fileName = 'VIDEO';
+    }
+
+    function TransferComponent(cursor) {
+        var that = this;
+
+        TransferModule.call(this);
+        // 属性
+        this.cursor = cursor;
+
+        // 方法
+        this.doBack = function () {
+//            console.log(decodeURIComponent(this.cursor.video.backURL))
+            window.location.href = decodeURIComponent(this.cursor.video.backURL);
+        };
+
+        this.onKeyDown = function (event) {
+            var code = getKeyCode(event);
+
+            switch (code) {
+                case 'KEY_NUMBER1':
+                    that.toggle();
+                    return false;
+                case 'KEY_EXIT':
+                case 'KEY_BACK':
+                    that.doBack();
+                    return false;
+                default:
+                    break;
+            }
+        };
+    }
+
+    window.onload = function () {
+        var
+            videoComponent = new VideoComponent(),
+            cursorComponent = new CursorComponent(videoComponent),
+            transferComponent = new TransferComponent(cursorComponent);
+
+        transferComponent.init();
+        videoComponent.init();
+
+        document.onkeydown = transferComponent.onKeyDown;
+    };
+</script>
+</html>

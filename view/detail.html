@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style/common.css">
+    <title>详情页</title>
+</head>
+<body>
+<div class="bg-content">
+    <div>
+        <div id="nav-left" class="nav-icon"></div>
+        <div id="drawing-area" class="drawing-area"></div>
+        <div id="nav-right" class="nav-icon"></div>
+    </div>
+    <div id="content" class="textures">
+        <div id="textures-title" class="textures-title"></div>
+        <div id="textures-trapper">
+            <div id="textures-text"></div>
+        </div>
+        <div id="textures-pager" class="textures-pager"></div>
+    </div>
+    <div id="swiper" class="swiper"></div>
+    <div id="debug-message"></div>
+</div>
+</body>
+<script type="application/javascript" src="../utility/assistant.js"></script>
+<script type="application/javascript" src="../utility/async.js"></script>
+<script type="application/javascript" src="../cms/cms.config.js"></script>
+<script type="application/javascript" src="../cms/cms.api.js"></script>
+<script type="application/javascript" src="../module/swiper.module.js"></script>
+<script type="application/javascript" src="../module/textures.module.js"></script>
+<script type="application/javascript" src="../module/pager.module.js"></script>
+<script type="application/javascript" src="../module/transfer.module.js"></script>
+<script type="application/javascript">
+    function CursorComponent(textures) {
+        this.fileName = 'PG_TEXT';
+        this.textures = textures;
+    }
+
+    function TransferComponent(cursor) {
+        var that = this;
+
+        TransferModule.call(this);
+        // 属性
+        this.cursor = cursor;
+
+        // 方法
+        this.doBack = function () {
+            this.remove('PG_TEXT');
+            window.location.href = this.cursor.textures.backURL + this.package([]);
+        };
+
+        this.onKeyDown = function (event) {
+            var code = getKeyCode(event);
+            switch (code) {
+                case 'KEY_NUMBER1':
+                    that.toggle();
+                    return false;
+                case 'KEY_LEFT':
+                    that.cursor.textures.changeImage(-1);
+                    return false;
+                case 'KEY_RIGHT':
+                    that.cursor.textures.changeImage(1);
+                    return false;
+                case 'KEY_PAGE_UP':
+                case 'KEY_UP':
+                    that.cursor.textures.pager.turn(document.getElementById('textures-text'), document.getElementById('textures-pager'), -1);
+                    return false;
+                case 'KEY_PAGE_DOWN':
+                case 'KEY_DOWN':
+                    that.cursor.textures.pager.turn(document.getElementById('textures-text'), document.getElementById('textures-pager'), 1);
+                    return false;
+                case 'KEY_EXIT':
+                case 'KEY_BACK':
+                    that.doBack();
+                    return false;
+                default:
+                    break;
+            }
+        };
+    }
+
+    window.onload = function () {
+        var
+            texturesModule = new TexturesModule(),
+            cursorComponent = new CursorComponent(texturesModule),
+            transferComponent = new TransferComponent(cursorComponent);
+
+        transferComponent.init();
+
+        if (cmsConfig.environment === 'DEBUG') {
+            var data = {
+                title: '莆田市教育局简介',
+//                content: '      莆田市教育局是莆田市人民政府主管全市教育事业的职能部门，和中共莆田市委教育工作委员会合署办公。      主要职责: 1、贯彻执行党和国家、省委、省政府有关教育工作的方针、政策和法规，以及市委、市政府有关教育工作的实施意见，落实教育发展战略和发展规划。' +
+//                ' 2、研究拟订全市教育事业的发展规划，指导、协调发展规划的实施。' +
+//                ' 3、根据《中国教育改革和发展纲要》，党中央、国务院《关于深化教育改革全面推进素质教育的决定》，国务院《关于基础教育改革与发展的决定》，省委、省政府《关于加快实施科教兴省战略的决定》以及市委、市政府《关于加快实施科教兴市战略的决定》的要求，指导协调全市教育改革。' +
+//                '      莆田市教育局是莆田市人民政府主管全市教育事业的职能部门，和中共莆田市委教育工作委员会合署办公。      主要职责: 1、贯彻执行党和国家、省委、省政府有关教育工作的方针、政策和法规，以及市委、市政府有关教育工作的实施意见，落实教育发展战略和发展规划。' +
+//                ' 2、研究拟订全市教育事业的发展规划，指导、协调发展规划的实施。' +
+//                ' 3、根据《中国教育改革和发展纲要》，党中央、国务院《关于深化教育改革全面推进素质教育的决定》，国务院《关于基础教育改革与发展的决定》，省委、省政府《关于加快实施科教兴省战略的决定》以及市委、市政府《关于加快实施科教兴市战略的决定》的要求，指导协调全市教育改革。',
+                content: '',
+                imgArr: [
+                    {
+                        img: 'url(../images/index/1.jpg)'
+                    },
+                    {
+                        img: 'url(../images/index/2.jpg)'
+                    },
+                    {
+                        img: 'url(../images/index/3.jpg)'
+                    },
+                    {
+                        img: 'url(../images/index/4.jpg)'
+                    }
+                ]
+            };
+            texturesModule.render(data);
+        } else {
+            cmsApi.getListItemDetails(texturesModule.resourceId, function (response) {
+                if (response.hasOwnProperty('code')) {
+                    if ('1' === response.code || 1 === response.code) {
+                        texturesModule.render(response);
+                    }
+                }
+            });
+        }
+        document.onkeydown = transferComponent.onKeyDown;
+    };
+</script>
+</html>

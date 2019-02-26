@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style/common.css">
+    <title>更多内容</title>
+</head>
+<body>
+<div class="bg-content">
+    <!--<div id="bar" class="bar"></div>-->
+    <div id="content" class="more-page-content"></div>
+    <div class="more-page-index-img">
+        <div id="more-page-index-text" class="more-page-index-text">
+        </div>
+    </div>
+    <div id="cursor"></div>
+    <div id="debug-message"></div>
+</div>
+</body>
+<script type="application/javascript" src="../utility/assistant.js"></script>
+<script type="application/javascript" src="../utility/async.js"></script>
+<script type="application/javascript" src="../cms/cms.config.js"></script>
+<script type="application/javascript" src="../cms/cms.api.js"></script>
+<script type="application/javascript" src="../module/bar.module.js"></script>
+<script type="application/javascript" src="../module/cursor.module.js"></script>
+<script type="application/javascript" src="../module/more.module.js"></script>
+<script type="application/javascript" src="../module/pager.module.js"></script>
+<script type="application/javascript" src="../module/transfer.module.js"></script>
+<script>
+    function MoreComponent() {
+        MoreModule.call(this);
+    }
+
+    function CursorComponent(more) {
+        CursorModule.call(this);
+
+        // 属性
+        this.focusArea = 4;
+//        this.bar = bar;
+        this.more = more;
+        this.fileName = 'PG_MORE';
+
+        // 方法
+        this.moveX = function (direction) {
+            this.focusOut();
+            switch (this.focusArea) {
+                case 4:
+                    if (-1 === this.more.moveX(direction)) {
+                        this.changePage(direction);
+                    }
+                    break;
+//                case 5:
+//                    this.bar.moveX(direction, true);
+//                    break;
+                default:
+                    break;
+            }
+            this.focusOn();
+        };
+
+        this.moveY = function (direction) {
+            this.focusOut();
+            switch (this.focusArea) {
+                case 4:
+                    this.more.moveY(direction);
+                    break;
+//                case 5:
+//                    this.focusArea = 4;
+//                    break;
+                default:
+                    break;
+            }
+            this.focusOn();
+        };
+
+        this.changePage = function (direction) {
+            var that = this;
+
+            this.more.changePage(direction, function () {
+                that.focusOn();
+            });
+        };
+    }
+
+    function TransferComponent(cursor) {
+        var that = this;
+
+        TransferModule.call(this);
+        // 属性
+        this.cursor = cursor;
+
+        // 方法
+        this.doBack = function () {
+            this.remove(this.cursor.fileName);
+            window.location.href = this.cursor.more.backURL + this.package([]);
+        };
+
+        this.doSelect = function () {
+            var
+                postfix,
+                params = {};
+
+            this.remove(this.cursor.fileName);
+
+            switch (this.cursor.focusArea) {
+                case 4:
+                    if (this.cursor.more.moreItemArray[this.cursor.more.focusPosY][this.cursor.more.focusPosX].flag === 0) {
+                        params.PG_MORE = {
+                            focusArea: this.cursor.focusArea,
+                            focusPosX: this.cursor.more.focusPosX,
+                            focusPosY: this.cursor.more.focusPosY,
+                            resourceId: this.cursor.more.resourceId,
+                            backURL: this.cursor.more.backURL,
+                            pageIndex: this.cursor.more.pageIndex
+                        };
+                        params.PG_TEXT = {
+                            resourceId: this.cursor.more.moreItemArray[this.cursor.more.focusPosY][this.cursor.more.focusPosX].id,
+                            backURL: 'more.html',
+                        };
+                        postfix = this.package(params);
+                        window.location.href = 'detail.html' + postfix;
+                    } else if (this.cursor.more.moreItemArray[this.cursor.more.focusPosY][this.cursor.more.focusPosX].flag === 1) {
+                        params.VIDEO = {
+                            backURL: this.backUrl(),
+                            fileName: this.cursor.fileName,
+                            focusArea: this.cursor.focusArea,
+                            focusPosX: this.cursor.more.focusPosX,
+                            focusPosY: this.cursor.more.focusPosY,
+                            resourceId: this.cursor.more.resourceId,
+                            morePageBackURL: this.cursor.more.backURL,
+                            pageIndex: this.cursor.more.pageIndex,
+                            assertId: this.cursor.more.moreItemArray[this.cursor.more.focusPosY][this.cursor.more.focusPosX].assetid
+                        };
+                        postfix = this.package(params);
+                        window.location.href = 'video.html' + postfix;
+                    } else {
+
+                    }
+                    break;
+                case 5:
+                    this.cursor.bar.doSelect();
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        this.onKeyDown = function (event) {
+            var code = getKeyCode(event);
+
+            switch (code) {
+                case 'KEY_NUMBER1':
+                    that.toggle();
+                    return false;
+                case 'KEY_UP':
+                    that.cursor.moveY(-1);
+                    return false;
+                case 'KEY_DOWN':
+                    that.cursor.moveY(1);
+                    return false;
+                case 'KEY_LEFT':
+                    that.cursor.moveX(-1);
+                    return false;
+                case 'KEY_RIGHT':
+                    that.cursor.moveX(1);
+                    return false;
+                case 'KEY_PAGE_UP':
+                    that.cursor.changePage(-1);
+                    return false;
+                case 'KEY_PAGE_DOWN':
+                    that.cursor.changePage(1);
+                    return false;
+                case 'KEY_SELECT':
+                    that.doSelect();
+                    return false;
+                case 'KEY_EXIT':
+                case 'KEY_BACK':
+                    that.doBack();
+                    return false;
+                default:
+                    break;
+            }
+        };
+    }
+
+    window.onload = function () {
+        var
+//            barComponent = new BarComponent(),
+            moreComponent = new MoreComponent(),
+            cursorComponent = new CursorComponent(moreComponent),
+//            cursorComponent = new CursorComponent(moreComponent),
+            transferComponent = new TransferComponent(cursorComponent);
+
+        document.onkeydown = transferComponent.onKeyDown;
+
+        transferComponent.init();
+//        barComponent.init();
+        moreComponent.init(moreComponent.pageIndex, function () {
+            cursorComponent.focusOn();
+        });
+    };
+</script>
+</html>

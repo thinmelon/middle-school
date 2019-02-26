@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style/common.css">
+    <title>名师课堂</title>
+</head>
+<body>
+<div class="background">
+    <div id="bar" class="bar"></div>
+    <div id="menu"></div>
+    <div id="notices_board" class="notices_board">
+        <div id="notices_board_bar" class="notices_board_bar"></div>
+        <div id="notices_board_content" class="notices_board_content"></div>
+        <div class="list-item-more"></div>
+    </div>
+    <div id="cursor"></div>
+    <div id="debug-message"></div>
+</div>
+</body>
+<script type="application/javascript" src="../utility/assistant.js"></script>
+<script type="application/javascript" src="../utility/async.js"></script>
+<script type="application/javascript" src="../cms/cms.config.js"></script>
+<script type="application/javascript" src="../cms/cms.api.js"></script>
+<script type="application/javascript" src="../module/bar.module.js"></script>
+<script type="application/javascript" src="../module/menu.module.js"></script>
+<script type="application/javascript" src="../module/list.module.js"></script>
+<script type="application/javascript" src="../module/cursor.module.js"></script>
+<script type="application/javascript" src="../module/transfer.module.js"></script>
+<script type="application/javascript" src="../wrapper/bar.wrapper.js"></script>
+<script type="application/javascript">
+    function MenuComponent() {
+        MenuModule.call(this);
+
+        this.menuPageArray = [{
+            itemsPerLine: [3],           // 每行所包含的元素数量
+            menuItemArray: [
+                {
+                    left: 224,
+                    top: 125,
+                    width: 203,
+                    height: 483,
+                    bgImageSrc: 'url(../images/class/1.jpg) no-repeat',
+                    resourceId: cmsConfig.classResourceIdArray[1].resourceId
+                },
+                {
+                    left: 438,
+                    top: 125,
+                    width: 203,
+                    height: 483,
+                    bgImageSrc: 'url(../images/class/2.jpg) no-repeat',
+                    resourceId: cmsConfig.classResourceIdArray[2].resourceId
+                },
+                {
+                    left: 648,
+                    top: 125,
+                    width: 203,
+                    height: 483,
+                    bgImageSrc: 'url(../images/class/3.jpg) no-repeat',
+                    resourceId: cmsConfig.classResourceIdArray[3].resourceId
+                }
+            ]
+        }];
+    }
+
+    function ListComponent() {
+        ListModule.call(this);
+
+        // 属性
+        this.focusPos = 0;
+        this.boardLeft = 870;
+        this.boardTop = 125;
+        this.boardWidth = 349;
+        this.boardHeight = 492;
+        this.noticesBoardBarWidth = 349;
+        this.noticesBoardBarHeight = 40;
+        this.itemLeft = 870;
+        this.itemTop = 168;
+        this.itemWidth = 345;
+        this.itemHeight = 32;
+        this.itemMoreLeft = 1080;
+        this.itemMoreTop = 565;
+        this.itemMoreWidth = 132;
+        this.itemMoreHeight = 32;
+        this.listItemNum = 10;
+        this.resourceId = cmsConfig.classResourceIdArray[4].resourceId;
+
+        // 方法
+    }
+
+    function CursorComponent(bar, menu, list) {
+        CursorModule.call(this);
+
+        // 属性
+        this.focusArea = 5;
+        this.bar = bar;
+        this.bar.focusPos = 4;
+        this.menu = menu;
+        this.list = list;
+        this.fileName = 'PG-ONE';
+    }
+
+    function TransferComponent(cursor) {
+        var that = this;
+
+        TransferModule.call(this);
+        // 属性
+        this.cursor = cursor;
+
+        // 方法
+        this.moveX = function (direction) {
+            this.cursor.focusOut();
+            switch (this.cursor.focusArea) {
+                case 0:         //  菜单
+                    if (this.cursor.menu.moveX(direction) < 0) {
+                        if (direction < 0) {
+                            this.cursor.focusArea = 5;
+                        } else {
+                            this.cursor.focusArea = 2;
+                        }
+                    }
+                    break;
+                case 2:         //  列表
+                    if (direction < 0) {
+                        this.cursor.focusArea = 0;
+                    } else {
+                        this.cursor.focusArea = 5;
+                    }
+                    break;
+                case 5:         // 栏目
+                    if (direction > 0) {
+                        this.cursor.focusArea = 0;
+                    } else {
+                        this.cursor.focusArea = 2;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            this.cursor.focusOn();
+        };
+
+        this.moveY = function (direction) {
+            var that = this;
+
+            this.cursor.focusOut();
+            switch (this.cursor.focusArea) {
+                case 0:         //  菜单
+                    break;
+                case 2:         //  列表
+                    this.cursor.list.moveY(direction);
+                    break;
+                case 5:         // 栏目
+                    this.cursor.bar.moveY(direction, false);
+                    break;
+                default:
+                    break;
+            }
+            this.cursor.focusOn();
+        };
+
+        this.doBack = function () {
+            this.remove(this.cursor.fileName);
+            window.location.href = 'index.html';
+        };
+
+        this.doSelect = function () {
+            var postfix = '',
+                params = [];
+
+            this.remove(this.cursor.fileName);
+            switch (this.cursor.focusArea) {
+                case 0:
+                    var i,
+                        _num = 0;
+
+                    for (i = 0; i < this.cursor.menu.focusPosY; i++) {
+                        _num += this.cursor.menu.itemsPerLine[i];
+                    }
+                    _num += this.cursor.menu.focusPosX;
+                    params = {
+                        'PG-ONE': {
+                            focusArea: this.cursor.focusArea,
+                            focusPosX: this.cursor.menu.focusPosX,
+                            focusPosY: this.cursor.menu.focusPosY
+                        }
+                    };
+                    params.PG_MORE = {
+                        resourceId: this.cursor.menu.menuItemArray[_num].resourceId,
+                        backURL: 'class.html',
+                        pageIndex: 1
+                    };
+                    postfix = this.package(params);
+                    window.location.href = 'more.html' + postfix;
+                    break;
+                case 2:
+                    this.cursor.list.doSelect(this, this.cursor.focusArea, this.cursor.list.focusPos, 'class.html', this.cursor.list.resourceId);
+                    break;
+                case 5:         // 栏目
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        this.onKeyDown = function (event) {
+            var code = getKeyCode(event);
+
+            switch (code) {
+                case 'KEY_NUMBER1':
+                    that.toggle();
+                    return false;
+                case 'KEY_UP':
+                    that.moveY(-1);
+                    return false;
+                case 'KEY_DOWN':
+                    that.moveY(1);
+                    return false;
+                case 'KEY_LEFT':
+                    that.moveX(-1);
+                    return false;
+                case 'KEY_RIGHT':
+                    that.moveX(1);
+                    return false;
+                case 'KEY_SELECT':
+                    that.doSelect();
+                    return false;
+                case 'KEY_EXIT':
+                case 'KEY_BACK':
+                    that.doBack();
+                    return false;
+                default:
+                    break;
+            }
+        };
+    }
+
+    window.onload = function () {
+        var
+            barComponent = new BarComponent(),
+            menuComponent = new MenuComponent(),
+            listComponent = new ListComponent(),
+            cursorComponent = new CursorComponent(barComponent, menuComponent, listComponent),
+            transferComponent = new TransferComponent(cursorComponent);
+
+        /**
+         *  添加按键事件处理
+         */
+        document.onkeydown = transferComponent.onKeyDown;           //  按键事件处理
+
+        /**
+         *  初始化各模块
+         */
+        transferComponent.init();
+        barComponent.init();
+        menuComponent.init();
+        listComponent.init(function () {
+            /**
+             *  光标定位
+             */
+            cursorComponent.focusOn();
+        });
+    };
+
+</script>
+</html>

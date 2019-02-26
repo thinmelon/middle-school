@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style/common.css">
+    <title>学生舞台</title>
+</head>
+<body>
+<div class="background">
+    <div id="bar" class="bar"></div>
+    <div id="swiper" class="swiper"></div>
+    <div id="notices_board" class="notices_board">
+        <div id="notices_board_bar" class="notices_board_bar"></div>
+        <div id="notices_board_content" class="notices_board_content"></div>
+        <div class="list-item-more"></div>
+    </div>
+    <div id="cursor"></div>
+    <div id="debug-message"></div>
+</div>
+</body>
+<script type="application/javascript" src="../utility/assistant.js"></script>
+<script type="application/javascript" src="../utility/async.js"></script>
+<script type="application/javascript" src="../cms/cms.config.js"></script>
+<script type="application/javascript" src="../cms/cms.api.js"></script>
+<script type="application/javascript" src="../module/bar.module.js"></script>
+<script type="application/javascript" src="../module/swiper.module.js"></script>
+<script type="application/javascript" src="../module/list.module.js"></script>
+<script type="application/javascript" src="../module/cursor.module.js"></script>
+<script type="application/javascript" src="../module/transfer.module.js"></script>
+<script type="application/javascript" src="../wrapper/bar.wrapper.js"></script>
+<script type="application/javascript">
+    function SwiperComponent() {
+        SwiperModule.call(this);
+
+        this.swiperTop = 126;
+        this.swiperLeft = 220;
+        this.swiperWidth = 628;
+        this.swiperHeight = 482;
+        this.resourceId = cmsConfig.studentResourceIdArray[1].resourceId;
+    }
+
+    function ListComponent() {
+        ListModule.call(this);
+
+        // 属性
+        this.focusPos = 0;
+        this.boardLeft = 870;
+        this.boardTop = 125;
+        this.boardWidth = 349;
+        this.boardHeight = 492;
+        this.noticesBoardBarWidth = 349;
+        this.noticesBoardBarHeight = 40;
+        this.itemLeft = 870;
+        this.itemTop = 168;
+        this.itemWidth = 345;
+        this.itemHeight = 32;
+        this.itemMoreLeft = 1080;
+        this.itemMoreTop = 565;
+        this.itemMoreWidth = 132;
+        this.itemMoreHeight = 32;
+        this.listItemNum = 10;
+        this.resourceId = cmsConfig.studentResourceIdArray[2].resourceId;
+
+        // 方法
+    }
+
+    function CursorComponent(bar, swiper, list) {
+        CursorModule.call(this);
+
+        // 属性
+        this.focusArea = 5;
+        this.bar = bar;
+        this.bar.focusPos = 5;
+        this.swiper = swiper;
+        this.list = list;
+        this.fileName = 'PG-ONE';
+    }
+
+    function TransferComponent(cursor) {
+        var that = this;
+
+        TransferModule.call(this);
+        // 属性
+        this.cursor = cursor;
+
+        // 方法
+        this.moveX = function (direction) {
+            this.cursor.focusOut();
+            switch (this.cursor.focusArea) {
+                case 2:         //  列表
+                    if (direction < 0) {
+                        this.cursor.focusArea = 6;
+                    } else {
+                        this.cursor.focusArea = 5;
+                    }
+                    break;
+                case 5:         // 栏目
+                    if (direction > 0) {
+                        this.cursor.focusArea = 6;
+                    } else {
+                        this.cursor.focusArea = 2;
+                    }
+                    break;
+                case 6:         // 滚动海报
+                    if (-1 === this.cursor.swiper.moveX(direction)) {
+                        if (direction < 0) {
+                            this.cursor.focusArea = 5;
+                        } else {
+                            this.cursor.focusArea = 2;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+            this.cursor.focusOn();
+        };
+
+        this.moveY = function (direction) {
+            this.cursor.focusOut();
+            switch (this.cursor.focusArea) {
+                case 2:         //  列表
+                    this.cursor.list.moveY(direction);
+                    break;
+                case 5:         // 栏目
+                    this.cursor.bar.moveY(direction, false);
+                    break;
+                case 6:         // 滚动海报
+                    if (-1 === this.cursor.swiper.moveX(direction)) {
+                        if (direction < 0) {
+                            this.cursor.focusArea = 5;
+                        } else {
+                            this.cursor.focusArea = 2;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+            this.cursor.focusOn();
+        };
+
+        this.doBack = function () {
+            this.remove(this.cursor.fileName);
+            window.location.href = 'index.html';
+        };
+
+        this.doSelect = function () {
+            this.remove(this.cursor.fileName);
+            switch (this.cursor.focusArea) {
+                case 2:
+                    this.cursor.list.doSelect(this, this.cursor.focusArea, this.cursor.list.focusPos, 'student.html', this.cursor.list.resourceId);
+                    break;
+                case 5:         // 栏目
+                    break;
+                case 6:
+                    this.cursor.swiper.doSelect(this, this.cursor.focusArea, this.cursor.swiper.focusPos, 'student.html', this.cursor.swiper.resourceId);
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        this.onKeyDown = function (event) {
+            var code = getKeyCode(event);
+
+            switch (code) {
+                case 'KEY_NUMBER1':
+                    that.toggle();
+                    return false;
+                case 'KEY_UP':
+                    that.moveY(-1);
+                    return false;
+                case 'KEY_DOWN':
+                    that.moveY(1);
+                    return false;
+                case 'KEY_LEFT':
+                    that.moveX(-1);
+                    return false;
+                case 'KEY_RIGHT':
+                    that.moveX(1);
+                    return false;
+                case 'KEY_SELECT':
+                    that.doSelect();
+                    return false;
+                case 'KEY_EXIT':
+                case 'KEY_BACK':
+                    that.doBack();
+                    return false;
+                default:
+                    break;
+            }
+        };
+    }
+
+    window.onload = function () {
+        var
+            barComponent = new BarComponent(),
+            swiperComponent = new SwiperComponent(),
+            listComponent = new ListComponent(),
+            cursorComponent = new CursorComponent(barComponent, swiperComponent, listComponent),
+            transferComponent = new TransferComponent(cursorComponent);
+
+        /**
+         *  添加按键事件处理
+         */
+        document.onkeydown = transferComponent.onKeyDown;           //  按键事件处理
+
+        /**
+         *  初始化各模块
+         */
+        transferComponent.init();
+        barComponent.init();
+        swiperComponent.init();
+        listComponent.init(function () {
+            /**
+             *  光标定位
+             */
+            cursorComponent.focusOn();
+        });
+    };
+
+</script>
+</html>
