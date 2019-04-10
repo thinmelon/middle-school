@@ -107,8 +107,7 @@
 .list_item_text {
     position: absolute;
     left: 3px;
-    height: 21px;
-    padding: 3px 0;
+    height: 24px;
     overflow: hidden;
 }
 
